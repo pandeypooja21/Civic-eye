@@ -1,13 +1,10 @@
 // This is a serverless function for Vercel
 // It will handle all API requests
 
-// Import the Express app from the server directory
-import express from 'express';
-import cors from 'cors';
-import { createServer } from 'http';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-import dotenv from 'dotenv';
+// Import required modules
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
 
 // Load environment variables
 dotenv.config();
@@ -22,7 +19,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Basic route for testing
 app.get('/api', (req, res) => {
-  res.json({ 
+  res.json({
     message: 'Civic Eye API is running',
     env: process.env.NODE_ENV,
     timestamp: new Date().toISOString()
@@ -30,4 +27,4 @@ app.get('/api', (req, res) => {
 });
 
 // Export the Express API
-export default app;
+module.exports = app;

@@ -48,17 +48,21 @@ const server = http.createServer(app);
 // Initialize WebSocket server
 const wss = initWebSocketServer(server);
 
-// Start server
-server.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}`);
+// Initialize Fluvio if configured
+if (process.env.FLUVIO_ENABLED === 'true') {
+  setupFluvio().then(() => {
+    console.log('Fluvio initialized successfully');
+  }).catch(error => {
+    console.error('Failed to initialize Fluvio:', error);
+  });
+}
 
-  // Initialize Fluvio if configured
-  if (process.env.FLUVIO_ENABLED === 'true') {
-    try {
-      await setupFluvio();
-      console.log('Fluvio initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize Fluvio:', error);
-    }
-  }
-});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  server.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+// Export the Express API for Vercel
+module.exports = app;

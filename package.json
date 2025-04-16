@@ -2,7 +2,6 @@
   "name": "vite_react_shadcn_ts",
   "private": true,
   "version": "0.0.0",
-  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,7 +10,7 @@
     "preview": "vite preview",
     "start-dev": "node start-dev.js",
     "server": "cd server && npm run dev",
-    "vercel-build": "npm run build && cd server && npm install",
+    "vercel-build": "npm run build && cd server && npm install --omit=dev",
     "start": "node server/index.js"
   },
   "dependencies": {
