@@ -1,0 +1,24 @@
+{
+  "name": "civic-eye-server",
+  "version": "1.0.0",
+  "description": "Backend server for Civic Eye Reporting System",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "civic-eye-server": "file:",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "firebase": "^11.6.0",
+    "mongoose": "^7.5.0",
+    "nodemailer": "^6.10.1",
+    "ws": "^8.14.2"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

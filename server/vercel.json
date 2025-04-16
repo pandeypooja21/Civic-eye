@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "index.js",
+      "use": "@vercel/node"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "index.js"
+    }
+  ],
+  "env": {
+    "PORT": "@port",
+    "MONGODB_URI": "@mongodb_uri",
+    "FLUVIO_ENABLED": "@fluvio_enabled",
+    "FLUVIO_TOPIC": "@fluvio_topic",
+    "FLUVIO_ENDPOINT": "@fluvio_endpoint",
+    "EMAIL_ENABLED": "@email_enabled",
+    "EMAIL_SERVICE": "@email_service",
+    "EMAIL_USER": "@email_user",
+    "EMAIL_PASSWORD": "@email_password"
+  }
+}
