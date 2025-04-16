@@ -11,7 +11,8 @@
     "preview": "vite preview",
     "start-dev": "node start-dev.js",
     "server": "cd server && npm run dev",
-    "vercel-build": "npm run build && cd server && npm install"
+    "vercel-build": "npm run build && cd server && npm install",
+    "start": "node server/index.js"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
