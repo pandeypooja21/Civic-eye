@@ -3,12 +3,29 @@ const dotenv = require('dotenv');
 
 dotenv.config();
 
-// Create a transporter using environment variables
-// Create a transporter using environment variables or ethereal for testing
+// Create a transporter using environment variables or mock for Vercel
 let transporter;
 
-// Check if we have real email credentials
-if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
+// Check if we're in production (Vercel)
+const isProduction = process.env.NODE_ENV === 'production';
+
+// In production (Vercel), always use mock transporter for demo purposes
+if (isProduction) {
+  console.log('Running in production environment, using mock email service');
+  transporter = {
+    sendMail: async (options) => {
+      console.log('MOCK EMAIL SENT:', JSON.stringify({
+        to: options.to,
+        subject: options.subject,
+        // Don't log the full HTML content
+        contentLength: options.html ? options.html.length : 0
+      }));
+      return { messageId: 'mock-id-' + Date.now() };
+    }
+  };
+}
+// For development with real credentials
+else if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
   transporter = nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE || 'gmail',
     auth: {
@@ -17,8 +34,9 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
     },
   });
   console.log('Email service configured with real credentials');
-} else {
-  // For hackathon/testing, use ethereal.email (fake SMTP service)
+}
+// For development without credentials, use ethereal
+else {
   console.log('No email credentials found, using ethereal.email for testing');
 
   // Create a test account on first use
@@ -38,7 +56,7 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASSWORD) {
     // Fallback to a mock transporter
     transporter = {
       sendMail: async (options) => {
-        console.log('MOCK EMAIL SENT:', options);
+        console.log('MOCK EMAIL SENT:', options.to, options.subject);
         return { messageId: 'mock-id-' + Date.now() };
       }
     };

@@ -27,15 +27,18 @@ class WebSocketService {
     this.isConnecting = true;
     const wsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:5000';
 
+    // Check if we're in production (Vercel) or development
+    const isProduction = import.meta.env.PROD;
+
+    // Always use mock WebSocket in production (Vercel) since it doesn't support WebSockets well
+    if (isProduction) {
+      console.log('Running in production environment, using mock WebSocket');
+      this.useMockWebSocket();
+      return;
+    }
+
     try {
-      // Check if we're in production (Vercel) or development
-      const isProduction = import.meta.env.PROD;
-
-      if (isProduction && !wsUrl.startsWith('wss://')) {
-        console.warn('WebSocket URL should use wss:// protocol in production');
-      }
-
-      // Create a real WebSocket connection
+      // Create a real WebSocket connection for development
       this.socket = new WebSocket(wsUrl);
 
       this.socket.onopen = () => {
@@ -66,11 +69,7 @@ class WebSocketService {
       this.socket.onerror = (error) => {
         console.error('WebSocket error:', error);
         this.socket?.close();
-
-        // If we're in production and have a WebSocket error, fall back to mock mode
-        if (isProduction) {
-          this.useMockWebSocket();
-        }
+        this.useMockWebSocket();
       };
     } catch (error) {
       console.error('Error connecting to WebSocket:', error);
@@ -104,7 +103,7 @@ class WebSocketService {
 
   // Set up periodic mock events for testing
   private setupMockEvents(): void {
-    // Generate a mock event every 30 seconds
+    // Generate a mock event every 10 seconds
     setInterval(() => {
       const eventTypes: WebSocketEventType[] = ['issue-created', 'issue-updated'];
       const randomType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
@@ -116,7 +115,20 @@ class WebSocketService {
       };
 
       this.handleEvent(mockEvent);
-    }, 30000);
+      console.log(`Generated mock ${randomType} event for real-time updates`);
+    }, 10000);
+
+    // Also generate an immediate event to show real-time functionality
+    setTimeout(() => {
+      const mockEvent: WebSocketEvent = {
+        type: 'issue-created',
+        data: this.generateMockIssue('open'),
+        timestamp: Date.now()
+      };
+
+      this.handleEvent(mockEvent);
+      console.log('Generated immediate mock event for real-time updates');
+    }, 2000);
   }
 
   // Generate a mock issue for testing

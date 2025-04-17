@@ -89,12 +89,25 @@ router.post('/', async (req, res) => {
     // Send confirmation email if email is provided
     if (process.env.EMAIL_ENABLED === 'true' && req.body.reportedBy) {
       try {
-        await sendIssueConfirmationEmail(savedIssue, req.body.reportedBy);
+        const emailResult = await sendIssueConfirmationEmail(savedIssue, req.body.reportedBy);
         console.log(`Confirmation email sent to ${req.body.reportedBy}`);
+
+        // Add email info to the response
+        savedIssue._doc.emailSent = true;
+        savedIssue._doc.emailInfo = {
+          to: req.body.reportedBy,
+          messageId: emailResult.messageId || 'mock-id',
+          sentAt: new Date().toISOString()
+        };
       } catch (emailError) {
         console.error('Failed to send confirmation email:', emailError);
         // Continue even if email fails
+        savedIssue._doc.emailSent = false;
+        savedIssue._doc.emailError = emailError.message;
       }
+    } else {
+      savedIssue._doc.emailSent = false;
+      savedIssue._doc.emailInfo = { reason: 'Email not enabled or no email provided' };
     }
 
     res.status(201).json(savedIssue);
@@ -133,12 +146,29 @@ router.patch('/:id', async (req, res) => {
         originalIssue.status !== updatedIssue.status &&
         updatedIssue.reportedBy) {
       try {
-        await sendStatusUpdateEmail(updatedIssue, updatedIssue.reportedBy);
+        const emailResult = await sendStatusUpdateEmail(updatedIssue, updatedIssue.reportedBy);
         console.log(`Status update email sent to ${updatedIssue.reportedBy}`);
+
+        // Add email info to the response
+        updatedIssue._doc.emailSent = true;
+        updatedIssue._doc.emailInfo = {
+          to: updatedIssue.reportedBy,
+          messageId: emailResult.messageId || 'mock-id',
+          sentAt: new Date().toISOString(),
+          statusChange: `${originalIssue.status} → ${updatedIssue.status}`
+        };
       } catch (emailError) {
         console.error('Failed to send status update email:', emailError);
         // Continue even if email fails
+        updatedIssue._doc.emailSent = false;
+        updatedIssue._doc.emailError = emailError.message;
       }
+    } else {
+      updatedIssue._doc.emailSent = false;
+      updatedIssue._doc.emailInfo = {
+        reason: originalIssue.status === updatedIssue.status ?
+          'Status did not change' : 'Email not enabled or no email provided'
+      };
     }
 
     res.json(updatedIssue);
