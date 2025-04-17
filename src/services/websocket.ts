@@ -103,32 +103,72 @@ class WebSocketService {
 
   // Set up periodic mock events for testing
   private setupMockEvents(): void {
-    // Generate a mock event every 10 seconds
+    // Check for real issues in localStorage
+    const checkForRealIssues = () => {
+      try {
+        // Try to get real issues from localStorage
+        const storedIssues = localStorage.getItem('mockIssues');
+        if (storedIssues) {
+          const parsedIssues = JSON.parse(storedIssues);
+          if (parsedIssues && parsedIssues.length > 0) {
+            // Use the most recent issue for a mock event
+            const latestIssue = parsedIssues[0];
+
+            const mockEvent: WebSocketEvent = {
+              type: 'issue-created',
+              data: latestIssue,
+              timestamp: Date.now()
+            };
+
+            this.handleEvent(mockEvent);
+            console.log('Generated mock event from real localStorage issue');
+            return true;
+          }
+        }
+        return false;
+      } catch (error) {
+        console.error('Error checking localStorage for issues:', error);
+        return false;
+      }
+    };
+
+    // Try to use real issues first
+    const hasRealIssues = checkForRealIssues();
+
+    // If no real issues, generate random ones
+    if (!hasRealIssues) {
+      // Generate a mock event every 10 seconds
+      setInterval(() => {
+        const eventTypes: WebSocketEventType[] = ['issue-created', 'issue-updated'];
+        const randomType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
+
+        const mockEvent: WebSocketEvent = {
+          type: randomType,
+          data: this.generateMockIssue(randomType === 'issue-updated' ? 'in-progress' : 'open'),
+          timestamp: Date.now()
+        };
+
+        this.handleEvent(mockEvent);
+        console.log(`Generated mock ${randomType} event for real-time updates`);
+      }, 10000);
+
+      // Also generate an immediate event to show real-time functionality
+      setTimeout(() => {
+        const mockEvent: WebSocketEvent = {
+          type: 'issue-created',
+          data: this.generateMockIssue('open'),
+          timestamp: Date.now()
+        };
+
+        this.handleEvent(mockEvent);
+        console.log('Generated immediate mock event for real-time updates');
+      }, 2000);
+    }
+
+    // Check for new issues in localStorage every 5 seconds
     setInterval(() => {
-      const eventTypes: WebSocketEventType[] = ['issue-created', 'issue-updated'];
-      const randomType = eventTypes[Math.floor(Math.random() * eventTypes.length)];
-
-      const mockEvent: WebSocketEvent = {
-        type: randomType,
-        data: this.generateMockIssue(randomType === 'issue-updated' ? 'in-progress' : 'open'),
-        timestamp: Date.now()
-      };
-
-      this.handleEvent(mockEvent);
-      console.log(`Generated mock ${randomType} event for real-time updates`);
-    }, 10000);
-
-    // Also generate an immediate event to show real-time functionality
-    setTimeout(() => {
-      const mockEvent: WebSocketEvent = {
-        type: 'issue-created',
-        data: this.generateMockIssue('open'),
-        timestamp: Date.now()
-      };
-
-      this.handleEvent(mockEvent);
-      console.log('Generated immediate mock event for real-time updates');
-    }, 2000);
+      checkForRealIssues();
+    }, 5000);
   }
 
   // Generate a mock issue for testing

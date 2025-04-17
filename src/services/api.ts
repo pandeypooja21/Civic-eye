@@ -103,9 +103,37 @@ export const getAllIssues = async (): Promise<Issue[]> => {
   try {
     const response = await fetch(`${API_URL}/issues`);
     const data = await handleResponse(response);
-    return data.map(formatIssue);
+    const formattedIssues = data.map(formatIssue);
+
+    // Update mock issues with the real data
+    if (formattedIssues.length > 0) {
+      mockIssues = formattedIssues;
+      try {
+        localStorage.setItem('mockIssues', JSON.stringify(mockIssues));
+        console.log('Updated mock issues with server data');
+      } catch (storageError) {
+        console.error('Error saving to localStorage:', storageError);
+      }
+    }
+
+    return formattedIssues;
   } catch (error) {
     console.error('Error fetching issues, using mock data:', error);
+
+    // Try to get issues from localStorage first
+    try {
+      const storedIssues = localStorage.getItem('mockIssues');
+      if (storedIssues) {
+        const parsedIssues = JSON.parse(storedIssues);
+        if (parsedIssues && Array.isArray(parsedIssues) && parsedIssues.length > 0) {
+          console.log('Using issues from localStorage');
+          return parsedIssues;
+        }
+      }
+    } catch (storageError) {
+      console.error('Error reading from localStorage:', storageError);
+    }
+
     return mockIssues;
   }
 };
@@ -218,8 +246,23 @@ export const createIssue = async (
     try {
       localStorage.setItem('mockIssues', JSON.stringify(mockIssues));
       console.log('Saved new issue to localStorage');
+
+      // Also save to sessionStorage for cross-tab communication
+      sessionStorage.setItem('lastIssueCreated', JSON.stringify({
+        issue: newIssue,
+        timestamp: Date.now()
+      }));
+
+      // Dispatch a storage event to notify other tabs
+      window.dispatchEvent(new StorageEvent('storage', {
+        key: 'lastIssueCreated',
+        newValue: JSON.stringify({
+          issue: newIssue,
+          timestamp: Date.now()
+        })
+      }));
     } catch (error) {
-      console.error('Error saving to localStorage:', error);
+      console.error('Error saving to storage:', error);
     }
 
     return newIssue;

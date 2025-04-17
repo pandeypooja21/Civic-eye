@@ -58,7 +58,14 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Handle issue created event
     const handleIssueCreated = (event) => {
       if (event.type === 'issue-created') {
-        setIssues((prevIssues) => [event.data, ...prevIssues]);
+        setIssues((prevIssues) => {
+          // Check if this issue already exists
+          const exists = prevIssues.some(issue => issue.id === event.data.id);
+          if (exists) {
+            return prevIssues;
+          }
+          return [event.data, ...prevIssues];
+        });
         toast.success('New issue reported!');
       }
     };
@@ -75,6 +82,49 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       }
     };
 
+    // Listen for storage events from other tabs
+    const handleStorageEvent = (event) => {
+      if (event.key === 'lastIssueCreated') {
+        try {
+          const data = JSON.parse(event.newValue || '');
+          if (data && data.issue) {
+            setIssues((prevIssues) => {
+              // Check if this issue already exists
+              const exists = prevIssues.some(issue => issue.id === data.issue.id);
+              if (exists) {
+                return prevIssues;
+              }
+              return [data.issue, ...prevIssues];
+            });
+            toast.success('New issue reported from another tab!');
+          }
+        } catch (error) {
+          console.error('Error handling storage event:', error);
+        }
+      }
+    };
+
+    // Check sessionStorage for any issues created in other tabs
+    try {
+      const lastIssueCreated = sessionStorage.getItem('lastIssueCreated');
+      if (lastIssueCreated) {
+        const data = JSON.parse(lastIssueCreated);
+        if (data && data.issue && data.timestamp > Date.now() - 30000) { // Only consider issues from the last 30 seconds
+          setIssues((prevIssues) => {
+            // Check if this issue already exists
+            const exists = prevIssues.some(issue => issue.id === data.issue.id);
+            if (exists) {
+              return prevIssues;
+            }
+            return [data.issue, ...prevIssues];
+          });
+          console.log('Found issue created in another tab');
+        }
+      }
+    } catch (error) {
+      console.error('Error checking sessionStorage:', error);
+    }
+
     // Handle issue deleted event
     const handleIssueDeleted = (event) => {
       if (event.type === 'issue-deleted') {
@@ -90,11 +140,15 @@ export const IssueProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     websocketService.addEventListener('issue-updated', handleIssueUpdated);
     websocketService.addEventListener('issue-deleted', handleIssueDeleted);
 
+    // Add storage event listener for cross-tab communication
+    window.addEventListener('storage', handleStorageEvent);
+
     // Cleanup on unmount
     return () => {
       websocketService.removeEventListener('issue-created', handleIssueCreated);
       websocketService.removeEventListener('issue-updated', handleIssueUpdated);
       websocketService.removeEventListener('issue-deleted', handleIssueDeleted);
+      window.removeEventListener('storage', handleStorageEvent);
       websocketService.disconnect();
     };
   }, []);
