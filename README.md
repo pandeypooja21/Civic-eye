@@ -92,14 +92,6 @@ This will start both the frontend and backend servers concurrently.
 
 ## API Endpoints
 
-### Issues
-- `GET /api/issues` - Get all issues
-- `GET /api/issues/filter` - Get filtered issues
-- `GET /api/issues/:id` - Get a specific issue
-- `POST /api/issues` - Create a new issue
-- `PATCH /api/issues/:id` - Update an issue
-- `DELETE /api/issues/:id` - Delete an issue
-
 ## WebSocket Events
 
 - `issue-created` - Triggered when a new issue is reported
@@ -121,6 +113,6 @@ npm run build
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+## Team :-
+Pooja Pandey
+Hrasheekesh kr. Singh
